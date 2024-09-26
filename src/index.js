@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { createRoot } from 'react-dom/client'
 import { formatDistanceToNowStrict } from 'date-fns'
 
@@ -6,6 +6,7 @@ import NewTaskForm from './NewTaskForm/NewTaskForm'
 import TaskList from './TaskList/TaskList'
 import Footer from './Footer/Footer'
 import Task from './Task/Task'
+
 import './index.css'
 import './default.css'
 
@@ -16,9 +17,9 @@ function App() {
   const [task, setTask] = useState([])
   const [inputValue, setInputValue] = useState('')
   const [editValue, setEditValue] = useState('')
-  // const [checkBox, setCheckBox] = useState(false);
   const [filter, setFilter] = useState('all')
-  // const [formatCreate, setFormatCreate] = useState("");
+  const [minutes, setMinute] = useState('')
+  const [seconds, setSeconds] = useState('')
 
   const newItem = {
     task: inputValue,
@@ -26,6 +27,9 @@ function App() {
     clasName: null,
     timeCreated: new Date(),
     id: (idCount += 1),
+    min: Number(minutes),
+    sec: Number(seconds),
+    playPause: false,
   }
 
   const editItem = {
@@ -51,6 +55,13 @@ function App() {
     setInputValue(newValue) // Обновляем состояние
   }
 
+  const handleMinuteChange = (newValue) => {
+    setMinute(newValue) // Обновляем состояние
+  }
+  const handleSecondsChange = (newValue) => {
+    setSeconds(newValue) // Обновляем состояние
+  }
+
   const handleEditChange = (editValues) => {
     setEditValue(editValues) // Обновляем состояние
   }
@@ -72,12 +83,56 @@ function App() {
 
   const filterResult = filters(task, filter)
 
+  useEffect(() => {
+    const time = setInterval(() => {
+      setTask((prevTask) =>
+        prevTask.map((it) => {
+          if (it.sec !== 0 || it.min !== 0) {
+            if (it.playPause) {
+              if (it.sec < 1) {
+                return { ...it, sec: 59, min: Number(it.min) - 1 }
+              }
+              return { ...it, sec: Number(it.sec) - 1 }
+            }
+          }
+          return it
+        })
+      )
+    }, 1000)
+
+    return () => clearInterval(time)
+  }, [task])
+
   const elem = filterResult.map((item) => {
     const { id, ...itemProps } = item
     return (
       <Task
         key={id}
         {...itemProps}
+        onPlay={() => {
+          let play = [...task]
+          play = task.map((playItem) => {
+            if (playItem.id === id) {
+              const plItem = playItem
+              plItem.playPause = true
+              return playItem
+            }
+            return playItem
+          })
+          setTask(play)
+        }}
+        onPause={() => {
+          let pause = [...task]
+          pause = task.map((pauseItem) => {
+            if (pauseItem.id === id) {
+              const pausItem = pauseItem
+              pausItem.playPause = false
+              return pausItem
+            }
+            return pauseItem
+          })
+          setTask(pause)
+        }}
         onDeleted={() => setTask(task.filter((it) => it.id !== id))}
         // Пишем функцию которое изменяет состояние задачи на редактирование>>
         onEdit={() => {
@@ -103,6 +158,8 @@ function App() {
               editItem.check = items.check
               editItem.created = items.created
               editItem.timeCreated = items.timeCreated
+              editItem.min = items.min
+              editItem.sec = items.sec
               if (editItem.check === true) editItem.clasName = 'completed'
               return editItem
             }
@@ -142,6 +199,8 @@ function App() {
     <section className="todoapp">
       <NewTaskForm
         onInputChange={handleInputChange}
+        onMinuteChange={handleMinuteChange}
+        onSecondsChange={handleSecondsChange}
         onAdded={() => {
           if (inputValue.trim().length !== 0 && inputValue.length !== 0) {
             setTask([...task, newItem])
@@ -150,8 +209,12 @@ function App() {
           updateTaskTimes()
           // Стираем поле ввода
           setInputValue('')
+          setMinute('')
+          setSeconds('')
         }}
         values={inputValue}
+        valueMin={minutes}
+        valueSec={seconds}
       />
       <section className="main">
         <TaskList>{elem}</TaskList>
