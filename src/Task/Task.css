@@ -112,7 +112,8 @@
 }
 
 .todo-list li label .title {
-	word-break: break-all;
+  width: 200px;
+	word-break: break-word;
 	display: block;
 	line-height: 1.2;
 	transition: color 0.4s;
