@@ -20,6 +20,7 @@ function App() {
   const [filter, setFilter] = useState('all')
   const [minutes, setMinute] = useState('')
   const [seconds, setSeconds] = useState('')
+  const [intervalId, setIntervalId] = useState(null)
 
   const newItem = {
     task: inputValue,
@@ -40,15 +41,23 @@ function App() {
   }
 
   // Функция для обновления времени "ago" для каждой задачи
+
   const updateTaskTimes = () => {
-    setTask((tasks) =>
-      tasks.map((taskes) => ({
-        ...taskes,
-        created: formatDistanceToNowStrict(taskes.timeCreated, {
-          addSuffix: true,
-        }),
-      }))
-    )
+    const updateTimes = () => {
+      setTask((tasks) =>
+        tasks.map((taskes) => ({
+          ...taskes,
+          created: formatDistanceToNowStrict(taskes.timeCreated, {
+            addSuffix: true,
+          }),
+        }))
+      )
+    }
+    updateTimes()
+
+    const intId = setInterval(() => updateTimes(), 1000)
+
+    return intId
   }
 
   const handleInputChange = (newValue) => {
@@ -101,15 +110,19 @@ function App() {
     }, 1000)
 
     return () => clearInterval(time)
-  }, [task])
+  }, [])
 
   const elem = filterResult.map((item) => {
-    const { id, ...itemProps } = item
+    const { id, playPause, ...itemProps } = item
+
     return (
       <Task
         key={id}
         {...itemProps}
         onPlay={() => {
+          if (playPause === true) {
+            return
+          }
           let play = [...task]
           play = task.map((playItem) => {
             if (playItem.id === id) {
@@ -122,6 +135,9 @@ function App() {
           setTask(play)
         }}
         onPause={() => {
+          if (playPause === false) {
+            return
+          }
           let pause = [...task]
           pause = task.map((pauseItem) => {
             if (pauseItem.id === id) {
@@ -133,7 +149,10 @@ function App() {
           })
           setTask(pause)
         }}
-        onDeleted={() => setTask(task.filter((it) => it.id !== id))}
+        onDeleted={() => {
+          clearInterval(intervalId) // Очищаем интервал
+          setTask(task.filter((it) => it.id !== id))
+        }}
         // Пишем функцию которое изменяет состояние задачи на редактирование>>
         onEdit={() => {
           const tk = [...task]
@@ -206,7 +225,9 @@ function App() {
             setTask([...task, newItem])
           }
           // Вызываем функцию для отображения времени создания задачи
-          updateTaskTimes()
+          const newIntervalId = updateTaskTimes()
+          setIntervalId(newIntervalId)
+
           // Стираем поле ввода
           setInputValue('')
           setMinute('')

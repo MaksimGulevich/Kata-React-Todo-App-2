@@ -9,13 +9,13 @@ function NewTaskForm({ onAdded, values, onInputChange, onMinuteChange, onSeconds
   const minuteChange = (event) => {
     onMinuteChange(
       // eslint-disable-next-line no-nested-ternary
-      Number.isNaN(Number(event.target.value)) ? 0 : Number(event.target.value)
+      Number.isNaN(Number(event.target.value)) ? '' : Number(event.target.value)
     ) // Передаем новое значение в основной компонент
   }
   const secondsChange = (event) => {
     onSecondsChange(
       // eslint-disable-next-line no-nested-ternary
-      Number(event.target.value) >= 60 ? 0 : Number.isNaN(Number(event.target.value)) ? 0 : Number(event.target.value)
+      Number(event.target.value) >= 60 ? '' : Number.isNaN(Number(event.target.value)) ? '' : Number(event.target.value)
     ) // Передаем новое значение в основной компонент
   }
 
